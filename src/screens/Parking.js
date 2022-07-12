@@ -13,11 +13,25 @@ const Parking = () => {
     const [value, setValue] = useState(1);
     const [slotId, setSlotId] = useState(-1);
     const [image, setImage] = useState('');
+    const [imageDefault, setImageDefault] = useState('');
+    const [showDefault, setShowDefault] = useState(true);
+    const [slots, setSlots] = useState('Loading...');
+
     useEffect(() => {
         socket.connect();
         // socket.emit('join')
+        socket.on('default', (body) => {
+            setImageDefault(body.default_path);
+            if(showDefault){
+                setSlots(body.num_vacant_space);
+            }
+        })
         socket.on('data_comming', (body) => {
+            if(showDefault){
+                setShowDefault(false);
+            }
             setImage(body.path);
+            setSlots(body.num_vacant_space);
         })
         socket.on('test', (data) => {
             console.log(data)
@@ -102,7 +116,8 @@ const Parking = () => {
             content: (
                 <div>
                     <p>Thời gian vào: {date.toDateString()}</p>
-                    <p>Số tiền bạn phải trả là: ...</p>
+                    <p>Bảng giá: 30.000đ/ngày</p>
+                    <p>Số tiền bạn phải trả là: {((new Date().getTime() - check.start)/86400000)*30000}đ</p>
                 </div>
             ),
             onOk() {
@@ -145,11 +160,12 @@ const Parking = () => {
                         })
                     }}> Gửi</Button>
                 </Input.Group>
-                <Spin spinning={!image}>
+                <h3 style={{marginTop: '2rem'}}>Số vị trí trống:{slots} </h3>
+                <Spin spinning={!image && !imageDefault}>
                     <div style={{ marginTop: "3rem" }}>
                         <Image
                             width={"40%"}
-                            src={image}
+                            src={showDefault?imageDefault: image}
                         />
                     </div>
                 </Spin>
